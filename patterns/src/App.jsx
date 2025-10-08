@@ -12,6 +12,8 @@ export default function App() {
   const [err, setErr] = useState(null);
 
   const [page, setPage] = useState(1);
+  const [sortBy, setSortBy] = useState("id"); // "id", "vs", "hs", "mmd"
+  const [sortDirection, setSortDirection] = useState("asc"); // "asc", "desc"
   const listRef = useRef(null);
 
   useEffect(() => {
@@ -38,10 +40,45 @@ export default function App() {
     return () => { abort = true; };
   }, []);
 
-  const totalPages = Math.max(1, Math.ceil(patterns.length / PAGE_SIZE));
+  // Sort patterns based on current sort settings
+  const sortedPatterns = React.useMemo(() => {
+    const sorted = [...patterns].sort((a, b) => {
+      let aVal, bVal;
+      
+      switch (sortBy) {
+        case "vs":
+          aVal = a.verticalSupport ?? 0;
+          bVal = b.verticalSupport ?? 0;
+          break;
+        case "hs":
+          aVal = a.horizontalSupport ?? 0;
+          bVal = b.horizontalSupport ?? 0;
+          break;
+        case "mmd":
+          aVal = a.meanDuration ?? 0;
+          bVal = b.meanDuration ?? 0;
+          break;
+        case "id":
+        default:
+          aVal = a.pattern_id;
+          bVal = b.pattern_id;
+          break;
+      }
+      
+      if (sortDirection === "desc") {
+        return bVal - aVal;
+      } else {
+        return aVal - bVal;
+      }
+    });
+    
+    return sorted;
+  }, [patterns, sortBy, sortDirection]);
+
+  const totalPages = Math.max(1, Math.ceil(sortedPatterns.length / PAGE_SIZE));
   const start = (page - 1) * PAGE_SIZE;
   const end = start + PAGE_SIZE;
-  const pageItems = patterns.slice(start, end);
+  const pageItems = sortedPatterns.slice(start, end);
 
   const goToPage = (p) => {
     const clamped = Math.min(Math.max(1, p), totalPages);
@@ -51,6 +88,17 @@ export default function App() {
       if (listRef.current) listRef.current.scrollTo({ top: 0, behavior: "smooth" });
       window.scrollTo({ top: 0, behavior: "smooth" }); // גם חלון, ליתר ביטחון
     });
+  };
+
+  const handleSortChange = (newSortBy) => {
+    if (newSortBy === sortBy) {
+      // Toggle direction if same sort field
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(newSortBy);
+      setSortDirection("asc");
+    }
+    setPage(1); // Reset to first page when sorting changes
   };
 
   return (
@@ -65,10 +113,55 @@ export default function App() {
     >
       {/* Header */}
       <header style={{padding: "16px 24px", flexShrink: 0, background: "#fff", borderBottom: "1px solid #e5e7eb"}}>
-        <h1 style={{margin: 0}}>All Patterns</h1>
-        <p style={{margin: "6px 0 0 0", color: "#6b7280"}}>
-          מציג עד {PAGE_SIZE} דפוסים בעמוד מתוך <b>{patterns.length}</b> דפוסים.
-        </p>
+        <div style={{display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16}}>
+          <div>
+            <h1 style={{margin: 0}}>All Patterns</h1>
+            <p style={{margin: "6px 0 0 0", color: "#6b7280"}}>
+              מציג עד {PAGE_SIZE} דפוסים בעמוד מתוך <b>{patterns.length}</b> דפוסים.
+            </p>
+          </div>
+          
+          {/* Sort Controls */}
+          <div style={{display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap"}}>
+            <label style={{color: "#6b7280", fontSize: "14px", fontWeight: "500"}}>
+              Sort by:
+            </label>
+            <div style={{display: "flex", gap: 8}}>
+              {[
+                {key: "id", label: "ID"},
+                {key: "vs", label: "VS"},
+                {key: "hs", label: "HS"},
+                {key: "mmd", label: "MMD"}
+              ].map(({key, label}) => (
+                <button
+                  key={key}
+                  onClick={() => handleSortChange(key)}
+                  style={{
+                    padding: "6px 12px",
+                    border: `2px solid ${sortBy === key ? "#3b82f6" : "#e5e7eb"}`,
+                    borderRadius: "6px",
+                    backgroundColor: sortBy === key ? "#eff6ff" : "#fff",
+                    color: sortBy === key ? "#1d4ed8" : "#374151",
+                    fontSize: "14px",
+                    fontWeight: sortBy === key ? "600" : "500",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4
+                  }}
+                >
+                  {label}
+                  {sortBy === key && (
+                    <span style={{fontSize: "12px"}}>
+                      {sortDirection === "asc" ? "↑" : "↓"}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </header>
 
 
