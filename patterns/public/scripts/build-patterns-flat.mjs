@@ -67,7 +67,7 @@ async function loadStateMapping(statesCsvPath) {
   return mapping;
 }
 
-// פענוח שם .pkl → { stateIds, tailVals }
+// פענוח שם .pkl → { stateIds, tailVals, patternName }
 function parseModelFilenameFlat(fname) {
   const base = fname.replace(/\.pkl$/i, "");
   const rawTokens = base.split(/[_\-,]+/).filter(Boolean); // ["2","1","999","0"] ...
@@ -82,9 +82,48 @@ function parseModelFilenameFlat(fname) {
     stateIds = tokens.slice(0, idx).map(t => Number(t)).filter(n => !Number.isNaN(n));
     tailVals = tokens.slice(idx + 1); // מחרוזות
   }
-  return { stateIds, tailVals };
+
+  // Use the complete filename as pattern name (e.g., "5-1_13_999_0_0_0")
+  const patternName = base;
+  
+  return { stateIds, tailVals, patternName };
 }
 
+
+// Load TIRP selection scores CSV
+async function loadTirpScores(tirpScoresPath) {
+  const csvText = await fs.readFile(tirpScoresPath, "utf8");
+  const { headers, rows } = parseCsvSmart(csvText);
+  const norm = h => h.replace(/\s+/g, "").toLowerCase();
+  const hmap = Object.fromEntries(headers.map(h => [norm(h), h]));
+  const keyTirpRep = hmap["tirp_representation"] ?? "TIRP_Representation";
+  const keyVerticalSupport = hmap["vertical_support"] ?? "Vertical_Support";
+  const keyHorizontalSupport = hmap["mean_horizontal_support"] ?? "Mean_Horizontal_Support";
+  const keyMeanDuration = hmap["mean_mean_duration"] ?? "Mean_Mean_Duration";
+
+  const scoresMap = {};
+  for (const row of rows) {
+    const tirpRep = String(row[keyTirpRep] ?? "").trim();
+    const verticalSupport = toNumberOrNull(row[keyVerticalSupport]);
+    const horizontalSupport = toNumberOrNull(row[keyHorizontalSupport]);
+    const meanDuration = toNumberOrNull(row[keyMeanDuration]);
+    
+    if (tirpRep) {
+      scoresMap[tirpRep] = {
+        verticalSupport,
+        horizontalSupport,
+        meanDuration
+      };
+    }
+  }
+  return scoresMap;
+}
+
+function toNumberOrNull(x) {
+  if (x == null || x === "") return null;
+  const n = Number(x);
+  return Number.isNaN(n) ? null : n;
+}
 
 async function main() {
   const { dir, out, states } = parseArgs(process.argv);
@@ -100,18 +139,35 @@ async function main() {
     process.exit(1);
   }
 
+  // Load TIRP selection scores
+  let tirpScoresMap = {};
+  try {
+    const tirpScoresPath = states.replace(/states\.csv$/i, "tirp_selection_scores.csv");
+    tirpScoresMap = await loadTirpScores(tirpScoresPath);
+    console.log(`Loaded ${Object.keys(tirpScoresMap).length} TIRP scores`);
+  } catch (e) {
+    console.warn(`Failed to load TIRP scores: ${e.message}`);
+  }
+
   const files = (await listFiles(dir))
     .filter(f => f.toLowerCase().endsWith(".pkl"))
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
 
-  const patterns = {}; // pattern_id: [state_ids, labels, tail_vals]
+  const patterns = {}; // pattern_id: [state_ids, labels, tail_vals, pattern_name, vertical_support, horizontal_support, mean_duration]
   let pid = 0;
 
   for (const fname of files) {
-    const { stateIds, tailVals } = parseModelFilenameFlat(fname);
+    const { stateIds, tailVals, patternName } = parseModelFilenameFlat(fname);
     if (!stateIds.length) continue;
     const labels = stateIds.map(sid => stateMap[sid] ?? String(sid));
-    patterns[pid] = [stateIds, labels, tailVals];
+    
+    // Look up statistics from TIRP scores
+    const stats = tirpScoresMap[patternName] ?? {};
+    const verticalSupport = stats.verticalSupport ?? null;
+    const horizontalSupport = stats.horizontalSupport ?? null;
+    const meanDuration = stats.meanDuration ?? null;
+    
+    patterns[pid] = [stateIds, labels, tailVals, patternName, verticalSupport, horizontalSupport, meanDuration];
     pid += 1;
   }
 
