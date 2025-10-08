@@ -29,7 +29,7 @@ function parseCsv(text) {
 }
 
 // --- טעינת קבצים (דרך fetch של הדפדפן) ---
-async function loadPatternJson(url = "/patterns/pattern.json") {
+async function loadPatternJson(url = "/patterns_td4c/pattern.json") {
   const res = await fetch(url, { cache: "no-cache" });
   if (!res.ok) throw new Error(`Failed to load ${url}`);
   return res.json();
@@ -171,7 +171,7 @@ export async function buildPatternInfo({
 // --- Build all patterns at once (loads pattern.json & states.csv once) ---
 export async function buildAllPatternsInfo({
   eventName,
-  patternJsonUrl = "/patterns/pattern.json",
+  patternJsonUrl = "/patterns_td4c/pattern.json",
   statesCsvUrl   = "/src/assets/states.csv",
   relationMap    = DEFAULT_RELATION_MAP,
   maxPatterns    = Infinity, // אפשר להגביל אם רוצים
@@ -268,3 +268,4 @@ export async function buildAllPatternsInfo({
 
   return all;
 }
+
