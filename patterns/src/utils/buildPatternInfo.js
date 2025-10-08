@@ -2,6 +2,8 @@
 // בונה מילון לפי המפרט: intervals, relations, event, cutoffs
 // מקור נתונים: pattern.json + states.csv
 
+import { shortenIntervalName } from './intervalMapper.js';
+
 // --- CSV parser קטן (תומך בגרשיים/פסיקים) ---
 function splitCsvLine(line) {
   const re = /"([^"]*)"|[^,]+/g;
@@ -69,8 +71,8 @@ function toNumberOrNull(x) {
 export async function buildPatternInfo({
   patternId,
   eventName,
-  patternJsonUrl = "/patterns/pattern.json",
-  statesCsvUrl   = "/src/assets/states.csv",
+  patternJsonUrl = "/patterns_EW_and_gradient/pattern.json",
+  statesCsvUrl   = "/src/assets/states_EW_and_gradient.csv",
   relationMap    = DEFAULT_RELATION_MAP,
 }) {
   // 1) טוענים pattern.json
@@ -78,14 +80,21 @@ export async function buildPatternInfo({
   const arr = patterns[String(patternId)] || patterns[patternId];
   if (!arr) throw new Error(`pattern_id ${patternId} not found in pattern.json`);
 
-  // arr = [state_ids, labels, tail_vals]
+  // arr = [state_ids, labels, tail_vals, pattern_name, vertical_support, horizontal_support, mean_duration]
   const stateIds = Array.isArray(arr[0]) ? arr[0] : [];
   const labels   = Array.isArray(arr[1]) ? arr[1] : [];
   const tailVals = Array.isArray(arr[2]) ? arr[2] : []; // מספרים כמחרוזות
+  const patternName = String(arr[3] || ""); // שם הדפוס החדש
+  const verticalSupport = arr[4] !== undefined ? Number(arr[4]) : null; // Vertical Support statistics
+  const horizontalSupport = arr[5] !== undefined ? Number(arr[5]) : null; // Mean Horizontal Support statistics
+  const meanDuration = arr[6] !== undefined ? Number(arr[6]) : null; // Mean Mean Duration statistics
 
-  // 2) קוד לכל אינטרוול
+  // 2) קוד לכל אינטרוול - שימוש בשמות מקוצרים במקום I1, I2, etc.
   const codeMap = {};
-  stateIds.forEach((_, i) => { codeMap[labels[i]] = `I${i + 1}`; });
+  stateIds.forEach((_, i) => { 
+    const shortenedName = shortenIntervalName(labels[i]);
+    codeMap[labels[i]] = shortenedName;
+  });
   codeMap[eventName] = "event";
 
   // 3) states.csv → חיתוכים + לייבלים
@@ -100,6 +109,7 @@ export async function buildPatternInfo({
   const keyBinID   = hmap["binid"]   ?? "BinID";
   const keyBinLow  = hmap["binlow"]  ?? "BinLow";
   const keyBinHigh = hmap["binhigh"] ?? "BinHigh";
+  const keyMethodName = hmap["methodname"] ?? "MethodName";
 
   // 4) בניית intervals + cutoffs_table
   const intervals = [];
@@ -115,6 +125,7 @@ export async function buildPatternInfo({
       [keyBinID]:   String(r[keyBinID]),
       [keyBinLow]:  toNumberOrNull(r[keyBinLow]),
       [keyBinHigh]: toNumberOrNull(r[keyBinHigh]),
+      [keyMethodName]: String(r[keyMethodName]),
     }));
 
     const code = codeMap[lbl];
@@ -130,6 +141,7 @@ export async function buildPatternInfo({
       code,
       low:  first[keyBinLow]  ?? null,
       high: first[keyBinHigh] ?? null,
+      methodName: first[keyMethodName] ?? "",
     });
   }
 
@@ -149,6 +161,10 @@ export async function buildPatternInfo({
     relations,
     event: { name: eventName, code: "event" },
     cutoffs: cutoffsTable,
+    patternName, // שם הדפוס החדש
+    verticalSupport, // Vertical Support statistics
+    horizontalSupport, // Mean Horizontal Support statistics
+    meanDuration, // Mean Mean Duration statistics
   };
 }
 
@@ -180,6 +196,7 @@ export async function buildAllPatternsInfo({
   const keyBinID   = hmap["binid"]   ?? "BinID";
   const keyBinLow  = hmap["binlow"]  ?? "BinLow";
   const keyBinHigh = hmap["binhigh"] ?? "BinHigh";
+  const keyMethodName = hmap["methodname"] ?? "MethodName";
 
   const toNumberOrNull = (x) => { if (x == null || x === "") return null; const n = Number(x); return Number.isNaN(n) ? null : n; };
 
@@ -193,10 +210,17 @@ export async function buildAllPatternsInfo({
     const stateIds  = Array.isArray(arr?.[0]) ? arr[0] : [];
     const labels    = Array.isArray(arr?.[1]) ? arr[1] : [];
     const tailVals  = Array.isArray(arr?.[2]) ? arr[2] : [];
+    const patternName = String(arr?.[3] || ""); // שם הדפוס החדש
+    const verticalSupport = arr?.[4] !== undefined ? Number(arr[4]) : null; // Vertical Support statistics
+    const horizontalSupport = arr?.[5] !== undefined ? Number(arr[5]) : null; // Mean Horizontal Support statistics
+    const meanDuration = arr?.[6] !== undefined ? Number(arr[6]) : null; // Mean Mean Duration statistics
 
-    // code map
+    // code map - שימוש בשמות מקוצרים במקום I1, I2, etc.
     const codeMap = {};
-    stateIds.forEach((_, i) => (codeMap[labels[i]] = `I${i + 1}`));
+    stateIds.forEach((_, i) => {
+      const shortenedName = shortenIntervalName(labels[i]);
+      codeMap[labels[i]] = shortenedName;
+    });
     codeMap[eventName] = "event";
 
     // intervals + cutoffs table
@@ -213,11 +237,12 @@ export async function buildAllPatternsInfo({
           [keyBinID]:   String(r[keyBinID]),
           [keyBinLow]:  toNumberOrNull(r[keyBinLow]),
           [keyBinHigh]: toNumberOrNull(r[keyBinHigh]),
+          [keyMethodName]: String(r[keyMethodName]),
         }));
       const code = codeMap[lbl];
       intervals.push({ label: lbl, state_id: sid, code, cutoffs: slice });
       const first = slice[0] || {};
-      cutoffs.push({ code, low: first[keyBinLow] ?? null, high: first[keyBinHigh] ?? null });
+      cutoffs.push({ code, low: first[keyBinLow] ?? null, high: first[keyBinHigh] ?? null, methodName: first[keyMethodName] ?? "" });
     }
 
     // relations לפי tail_vals (i<j)
@@ -234,6 +259,10 @@ export async function buildAllPatternsInfo({
       relations,
       event: { name: eventName, code: "event" },
       cutoffs,
+      patternName, // שם הדפוס החדש
+      verticalSupport, // Vertical Support statistics
+      horizontalSupport, // Mean Horizontal Support statistics
+      meanDuration, // Mean Mean Duration statistics
     });
   }
 
