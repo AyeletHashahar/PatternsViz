@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import React from "react";
+import { shortenIntervalName } from "../utils/intervalMapper.js";
 
 /* ======= Typography ======= */
 const FONT_SIZE_TABLE = 15;
@@ -30,37 +31,61 @@ const Section = React.forwardRef(function Section(
 const IntervalLegend = ({ pattern }) => {
   if (!pattern || !Array.isArray(pattern.intervals)) return null;
   return (
-    <table
-      className="inline-table mx-0 w-auto"
-      style={{
-        fontSize: FONT_SIZE_TABLE,
-        borderCollapse: "separate",
-        borderSpacing: "8px 4px",
-        width: "max-content",
-        whiteSpace: "nowrap",
-      }}
-    >
-      <thead style={{ fontSize: FONT_SIZE_TABLE_HEADER }}>
-        <tr className="font-medium">
-          <th className="pr-4">Code</th>
-          <th>Interval</th>
-        </tr>
-      </thead>
-      <tbody>
-        {pattern.intervals.map((intv, idx) => (
-          <tr key={idx}>
-            <td className="pr-4" style={{ fontFamily: "monospace" }}>{intv.code}</td>
-            <td>{intv.label}</td>
+    <div className="overflow-x-auto">
+      <table
+        className="border-collapse"
+        style={{
+          fontSize: FONT_SIZE_TABLE,
+          minWidth: "400px",
+        }}
+      >
+        <thead>
+          <tr className="bg-gray-100">
+            <th className="border border-gray-300 px-3 py-2 text-left font-semibold" style={{ fontSize: FONT_SIZE_TABLE_HEADER }}>
+              Code
+            </th>
+            <th className="border border-gray-300 px-3 py-2 text-left font-semibold" style={{ fontSize: FONT_SIZE_TABLE_HEADER }}>
+              Interval
+            </th>
+            <th className="border border-gray-300 px-3 py-2 text-left font-semibold" style={{ fontSize: FONT_SIZE_TABLE_HEADER }}>
+              Method Name
+            </th>
           </tr>
-        ))}
-        <tr>
-          <td className="pr-4" style={{ fontWeight: "bold", fontFamily: "monospace" }}>
-            {pattern.event.code}
-          </td>
-          <td style={{ fontWeight: "bold" }}>{pattern.event.name}</td>
-        </tr>
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {pattern.intervals.map((intv, idx) => {
+            // Get the methodName from the first cutoff entry for this interval
+            const firstCutoff = intv.cutoffs?.[0];
+            const methodName = firstCutoff?.MethodName || "";
+            
+            return (
+              <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                <td className="border border-gray-300 px-3 py-2 font-mono font-semibold text-blue-600">
+                  {intv.code}
+                </td>
+                <td className="border border-gray-300 px-3 py-2 text-gray-700">
+                  {intv.label}
+                </td>
+                <td className="border border-gray-300 px-3 py-2 text-gray-700">
+                  {methodName || "—"}
+                </td>
+              </tr>
+            );
+          })}
+          <tr className="bg-red-50">
+            <td className="border border-gray-300 px-3 py-2 font-mono font-bold text-red-600">
+              {pattern.event.code}
+            </td>
+            <td className="border border-gray-300 px-3 py-2 font-bold text-red-600">
+              AKI
+            </td>
+            <td className="border border-gray-300 px-3 py-2 font-bold text-gray-500">
+              —
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   );
 };
 
@@ -121,15 +146,15 @@ const renderDiagram = (pattern) => {
         </g>
       ))}
       <g>
-        <rect x={eventX} y={bars.length * (barH + gap)} width="78" height={barH} rx="3" fill="#8B0000" />
-        <text x={eventX + 39} y={bars.length * (barH + gap) + barH / 2 + 4} textAnchor="middle" fill="#fff" fontSize="14">
-          {pattern.event.code}
+        <rect x={eventX} y={bars.length * (barH + gap)} width="50" height={barH} rx="3" fill="#8B0000" />
+        <text x={eventX + 25} y={bars.length * (barH + gap) + barH / 2 + 4} textAnchor="middle" fill="#fff" fontSize="14">
+          {pattern.event.name}
         </text>
       </g>
       <g>
-        <line x1={startX - 10} y1={totalH - 40} x2={eventX + 68} y2={totalH - 40} stroke="#000" strokeWidth="2" />
-        <polygon points={`${eventX + 68},${totalH - 45} ${eventX + 78},${totalH - 40} ${eventX + 68},${totalH - 35}`} fill="#000" />
-        <text x={eventX + 85} y={totalH - 35} fontSize="14" fontWeight="bold">Time</text>
+        <line x1={startX - 10} y1={totalH - 40} x2={eventX + 50} y2={totalH - 40} stroke="#000" strokeWidth="2" />
+        <polygon points={`${eventX + 50},${totalH - 45} ${eventX + 60},${totalH - 40} ${eventX + 50},${totalH - 35}`} fill="#000" />
+        <text x={eventX + 67} y={totalH - 35} fontSize="14" fontWeight="bold">Time</text>
       </g>
     </svg>
   );
@@ -260,33 +285,50 @@ export default function PatternDetails({ pattern }) {
           <tr>
             <td colSpan={2} className="p-0">
               <Section title="Cut-offs" fullHeight>
-                <table
-                  className="w-full mx-auto"
-                  style={{
-                    fontSize: FONT_SIZE_TABLE,
-                    borderCollapse: "separate",
-                    borderSpacing: "8px 4px",
-                    width: "100%",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  <thead className="font-medium" style={{ fontSize: FONT_SIZE_TABLE_HEADER }}>
-                    <tr>
-                      <th className="pr-4">StateID</th>
-                      <th className="pr-4">Lowercutoff</th>
-                      <th>Uppercutoff</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(pattern.cutoffs ?? []).map(({ code, low, high }) => (
-                      <tr key={code}>
-                        <td className="pr-4 font-medium text-center">{code}</td>
-                        <td className="pr-4 font-medium text-center">{low == null ? "−∞" : low}</td>
-                        <td className="pr-4 font-medium text-center">{high == null ? "∞" : high}</td>
+                <div className="overflow-x-auto">
+                  <table
+                    className="w-full mx-auto border-collapse"
+                    style={{
+                      fontSize: FONT_SIZE_TABLE,
+                      minWidth: "600px",
+                    }}
+                  >
+                    <thead>
+                      <tr className="bg-gray-100">
+                        <th className="border border-gray-300 px-4 py-3 text-left font-semibold" style={{ fontSize: FONT_SIZE_TABLE_HEADER }}>
+                          State ID
+                        </th>
+                        <th className="border border-gray-300 px-4 py-3 text-left font-semibold" style={{ fontSize: FONT_SIZE_TABLE_HEADER }}>
+                          Method Name
+                        </th>
+                        <th className="border border-gray-300 px-4 py-3 text-center font-semibold" style={{ fontSize: FONT_SIZE_TABLE_HEADER }}>
+                          Lower Cutoff
+                        </th>
+                        <th className="border border-gray-300 px-4 py-3 text-center font-semibold" style={{ fontSize: FONT_SIZE_TABLE_HEADER }}>
+                          Upper Cutoff
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {(pattern.cutoffs ?? []).map(({ code, methodName, low, high }, index) => (
+                        <tr key={code} className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                          <td className="border border-gray-300 px-4 py-3 font-mono font-semibold text-blue-600">
+                            {code}
+                          </td>
+                          <td className="border border-gray-300 px-4 py-3 text-gray-700">
+                            {methodName || "—"}
+                          </td>
+                          <td className="border border-gray-300 px-4 py-3 text-center font-mono">
+                            {low == null ? "−∞" : low}
+                          </td>
+                          <td className="border border-gray-300 px-4 py-3 text-center font-mono">
+                            {high == null ? "∞" : high}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </Section>
             </td>
           </tr>
