@@ -1,0 +1,58 @@
+StateID,TemporalPropertyID,MethodName,BinId,BinLow,BinHigh,Label
+1,7,equal_width,1,#NAME?,400,Urine output (Foley)
+2,7,equal_width,2,400,800,Urine output (Foley)
+3,7,equal_width,3,800,inf,Urine output (Foley)
+4,7,gradient,0,-4.764,4.764,Urine output (Foley)
+5,7,gradient,2,-4.764,4.764,Urine output (Foley)
+6,7,gradient,1,#NAME?,-4.764,Urine output (Foley)
+7,1,equal_width,2,69,138,Heart Rate
+8,1,equal_width,1,#NAME?,69,Heart Rate
+9,1,equal_width,3,138,inf,Heart Rate
+10,1,gradient,0,-1.909,1.855,Heart Rate
+11,1,gradient,1,#NAME?,-1.909,Heart Rate
+12,1,gradient,2,-1.909,1.855,Heart Rate
+13,4,equal_width,1,#NAME?,33,Respiratory Rate
+14,4,equal_width,2,33,66,Respiratory Rate
+15,4,equal_width,3,66,inf,Respiratory Rate
+16,4,gradient,1,#NAME?,-0.955,Respiratory Rate
+17,4,gradient,0,-0.955,0.955,Respiratory Rate
+18,4,gradient,2,-0.955,0.955,Respiratory Rate
+19,5,equal_width,3,68,inf,O2 saturation pulseoxymetry
+20,5,equal_width,2,36,68,O2 saturation pulseoxymetry
+21,5,equal_width,1,#NAME?,36,O2 saturation pulseoxymetry
+22,5,gradient,0,0,0,O2 saturation pulseoxymetry
+23,5,gradient,2,0,0,O2 saturation pulseoxymetry
+24,5,gradient,1,#NAME?,0,O2 saturation pulseoxymetry
+25,50971,equal_width,3,0,inf,Potassium
+26,50804,equal_width,3,0,inf,Total CO2
+27,50804,gradient,0,0,0,Total CO2
+28,6,equal_width,3,96.2,inf,Temperature
+29,6,equal_width,2,87.5,96.2,Temperature
+30,6,equal_width,1,#NAME?,87.5,Temperature
+31,6,gradient,1,#NAME?,-0.286,Temperature
+32,6,gradient,0,-0.286,0.191,Temperature
+33,6,gradient,2,-0.286,0.191,Temperature
+34,2,equal_width,2,98.667,197.333,Non Invasive Blood Pressure systolic
+35,2,equal_width,1,#NAME?,98.667,Non Invasive Blood Pressure systolic
+36,2,equal_width,3,197.333,inf,Non Invasive Blood Pressure systolic
+37,2,gradient,2,-3.814,4.764,Non Invasive Blood Pressure systolic
+38,2,gradient,1,#NAME?,-3.814,Non Invasive Blood Pressure systolic
+39,2,gradient,0,-3.814,4.764,Non Invasive Blood Pressure systolic
+40,3,equal_width,2,50,100,Non Invasive Blood Pressure diastolic
+41,3,equal_width,1,#NAME?,50,Non Invasive Blood Pressure diastolic
+42,3,equal_width,3,100,inf,Non Invasive Blood Pressure diastolic
+43,3,gradient,0,-2.862,2.862,Non Invasive Blood Pressure diastolic
+44,3,gradient,1,#NAME?,-2.862,Non Invasive Blood Pressure diastolic
+45,3,gradient,2,-2.862,2.862,Non Invasive Blood Pressure diastolic
+46,50822,equal_width,3,0,inf,Potassium
+47,50822,gradient,0,0,0,Potassium
+48,50882,equal_width,3,0,inf,Bicarbonate
+49,50912,equal_width,3,0,inf,Creatinine
+50,50983,equal_width,3,0,inf,Sodium
+51,51006,equal_width,3,0,inf,Urea Nitrogen
+52,8,equal_width,1,#NAME?,40,Chest Tubes Mediastinal
+53,8,equal_width,2,40,80,Chest Tubes Mediastinal
+54,8,equal_width,3,80,inf,Chest Tubes Mediastinal
+55,8,gradient,2,-9.462,0,Chest Tubes Mediastinal
+56,8,gradient,1,#NAME?,-9.462,Chest Tubes Mediastinal
+57,8,gradient,0,-9.462,0,Chest Tubes Mediastinal
