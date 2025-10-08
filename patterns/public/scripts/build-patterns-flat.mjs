@@ -4,7 +4,7 @@ import path from "node:path";
 
 function parseArgs(argv) {
   const args = {
-    dir: "./public/patterns",              // איפה ה-PKL
+    dir: "./public/patterns_td4c",              // איפה ה-PKL
     out: "./public/patterns/pattern.json", // קובץ יצוא
     states: "./src/assets/states.csv",     // מיקום ה-states.csv
   };
@@ -180,3 +180,4 @@ main().catch(err => {
   console.error(err);
   process.exit(1);
 });
+
