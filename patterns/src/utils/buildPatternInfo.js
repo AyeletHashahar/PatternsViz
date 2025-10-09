@@ -71,14 +71,14 @@ function toNumberOrNull(x) {
 export async function buildPatternInfo({
   patternId,
   eventName,
-  patternJsonUrl = "/patterns_EW_and_gradient/pattern.json",
-  statesCsvUrl   = "/src/assets/states_EW_and_gradient.csv",
+  patternJsonUrl = "/patterns__and_gradient/pattern.json",
+  statesCsvUrl   = "/src/assets/states.csv",
   relationMap    = DEFAULT_RELATION_MAP,
 }) {
   // 1) טוענים pattern.json
   const patterns = await loadPatternJson(patternJsonUrl);
   const arr = patterns[String(patternId)] || patterns[patternId];
-  if (!arr) throw new Error(`pattern_id ${patternId} not found in pattern.json`);
+  if (!arr) throw n Error(`pattern_id ${patternId} not found in pattern.json`);
 
   // arr = [state_ids, labels, tail_vals, pattern_name, vertical_support, horizontal_support, mean_duration]
   const stateIds = Array.isArray(arr[0]) ? arr[0] : [];
@@ -268,4 +268,5 @@ export async function buildAllPatternsInfo({
 
   return all;
 }
+
 
